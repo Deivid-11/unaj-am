@@ -1,0 +1,22 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ: configuración de cada máquina (rutas del JDK, dispositivos, caches)
+.idea/
+*.iml
+
+# Configuración local (ruta del SDK, claves)
+local.properties
+*.jks
+*.keystore
+
+# Android NDK / generados
+/captures
+.externalNativeBuild
+.cxx
+
+# macOS
+.DS_Store

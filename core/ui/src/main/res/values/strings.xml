@@ -1,0 +1,7 @@
+<resources>
+    <string name="core_ui_retry">Reintentar</string>
+    <string name="core_ui_error_network">No se pudo conectar con el servidor</string>
+    <string name="core_ui_error_not_found">La tarea no existe</string>
+    <string name="core_ui_error_empty_title">El título no puede estar vacío</string>
+    <string name="core_ui_error_unknown">Error desconocido</string>
+</resources>
