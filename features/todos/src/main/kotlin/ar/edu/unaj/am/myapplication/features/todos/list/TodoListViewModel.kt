@@ -10,6 +10,8 @@ import ar.edu.unaj.am.myapplication.core.domain.usecase.DeleteTodoUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.ObserveTodosUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.RefreshTodosUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.ToggleTodoUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +24,8 @@ import kotlinx.coroutines.launch
  * El ViewModel no sabe si detrás hay Retrofit, Room o un fake: solo conoce el dominio.
  * Eso lo hace fácil de testear (ver TodoListViewModelTest).
  */
-class TodoListViewModel(
+@HiltViewModel
+class TodoListViewModel @Inject constructor(
     private val observeTodos: ObserveTodosUseCase,
     private val refreshTodos: RefreshTodosUseCase,
     private val addTodo: AddTodoUseCase,

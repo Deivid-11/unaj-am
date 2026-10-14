@@ -1,10 +1,13 @@
 package ar.edu.unaj.am.myapplication
 
 import android.app.Application
-import ar.edu.unaj.am.myapplication.di.AppContainer
+import dagger.hilt.android.HiltAndroidApp
 
-class ComposeAcademyApp : Application() {
-
-    /** Una única instancia para toda la app: así la lista y el detalle comparten el mismo repositorio. */
-    val container: AppContainer by lazy { AppContainer() }
-}
+/**
+ * @HiltAndroidApp es el punto de partida de la inyección de dependencias:
+ * genera el componente raíz (SingletonComponent) y lo deja vivo mientras viva la app.
+ *
+ * Sin esta anotación, ningún @AndroidEntryPoint ni @HiltViewModel funciona.
+ */
+@HiltAndroidApp
+class ComposeAcademyApp : Application()

@@ -55,7 +55,7 @@ import ar.edu.unaj.am.myapplication.core.domain.model.Todo
 import ar.edu.unaj.am.myapplication.core.ui.components.ErrorContent
 import ar.edu.unaj.am.myapplication.core.ui.components.LoadingContent
 import ar.edu.unaj.am.myapplication.core.ui.components.asMessage
-import ar.edu.unaj.am.myapplication.core.ui.theme.MyApplicationTheme
+import ar.edu.unaj.am.myapplication.core.ui.theme.ComposeAcademyTheme
 import ar.edu.unaj.am.myapplication.features.todos.R
 
 @Composable
@@ -339,7 +339,7 @@ private val previewTodo = Todo(1, "Estudiar ViewModel", "Separar la lógica de l
 
 @Composable
 private fun TodoDetailPreview(uiState: TodoDetailUiState) {
-    MyApplicationTheme(dynamicColor = false) {
+    ComposeAcademyTheme {
         TodoDetailScreen(
             uiState = uiState,
             onBack = {},

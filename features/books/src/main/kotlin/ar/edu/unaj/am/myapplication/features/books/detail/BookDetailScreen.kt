@@ -43,7 +43,7 @@ import ar.edu.unaj.am.myapplication.core.domain.model.DomainError
 import ar.edu.unaj.am.myapplication.core.ui.components.ErrorContent
 import ar.edu.unaj.am.myapplication.core.ui.components.LoadingContent
 import ar.edu.unaj.am.myapplication.core.ui.components.asMessage
-import ar.edu.unaj.am.myapplication.core.ui.theme.MyApplicationTheme
+import ar.edu.unaj.am.myapplication.core.ui.theme.ComposeAcademyTheme
 import ar.edu.unaj.am.myapplication.features.books.R
 import ar.edu.unaj.am.myapplication.features.books.components.BookCover
 import ar.edu.unaj.am.myapplication.features.books.list.DownloadCount
@@ -218,7 +218,7 @@ private fun String.toLanguageName(): String =
 
 @Composable
 private fun BookDetailPreview(uiState: BookDetailUiState) {
-    MyApplicationTheme(dynamicColor = false) {
+    ComposeAcademyTheme {
         BookDetailScreen(uiState = uiState, onBack = {}, onRetry = {})
     }
 }

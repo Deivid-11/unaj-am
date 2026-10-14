@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import ar.edu.unaj.am.myapplication.core.domain.model.AppResult
 import ar.edu.unaj.am.myapplication.core.domain.usecase.GetTodoUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.UpdateTodoUseCase
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,11 +20,21 @@ import kotlinx.coroutines.launch
  * sin depender de que la UI llame a `loadTodo()` desde un LaunchedEffect.
  * Si rotamos la pantalla, el ViewModel sobrevive y NO vuelve a cargar.
  */
-class TodoDetailViewModel(
-    private val todoId: Int,
+@HiltViewModel(assistedFactory = TodoDetailViewModel.Factory::class)
+class TodoDetailViewModel @AssistedInject constructor(
+    @Assisted private val todoId: Int,
     private val getTodo: GetTodoUseCase,
     private val updateTodo: UpdateTodoUseCase
 ) : ViewModel() {
+
+    /**
+     * Hilt sabe construir los casos de uso, pero NO el todoId: ese dato lo elige
+     * el usuario al tocar una tarea. La fábrica combina las dos mitades.
+     */
+    @AssistedFactory
+    interface Factory {
+        fun create(todoId: Int): TodoDetailViewModel
+    }
 
     private val _uiState = MutableStateFlow<TodoDetailUiState>(TodoDetailUiState.Loading)
     val uiState: StateFlow<TodoDetailUiState> = _uiState.asStateFlow()

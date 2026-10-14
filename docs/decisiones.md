@@ -7,22 +7,27 @@ La arquitectura no es gratis: todo lo de acá tiene un costo, y es parte de la l
 [3 Un módulo por feature](#3-un-módulo-por-feature) · [4 Dominio en Kotlin puro](#4-dominio-en-kotlin-puro) ·
 [5 Repositorio como interfaz](#5-el-repositorio-es-una-interfaz) · [6 Casos de uso](#6-casos-de-uso) ·
 [7 Un modelo por capa](#7-un-modelo-por-capa-y-mappers) · [8 Errores como valores](#8-errores-como-valores) ·
-[9 AppContainer](#9-appcontainer-inyección-de-dependencias-manual) · [10 Route y Screen](#10-route-y-screen) ·
+[9 Hilt](#9-hilt-y-dónde-vive-cada-módulo) · [10 Route y Screen](#10-route-y-screen) ·
 [11 UiState y eventos](#11-uistate-sealed-y-eventos-como-estado) · [12 Estrategia de datos](#12-estrategia-de-datos-por-feature) ·
-[13 Navigation 3](#13-navigation-3) · [14 Datos simulados](#14-datos-simulados)
+[13 Navigation 3](#13-navigation-3) · [14 Datos simulados](#14-datos-simulados) ·
+[15 Assisted injection](#15-assisted-injection-para-los-argumentos-de-navegación) ·
+[16 Design system](#16-design-system-propio-sobre-material-3) ·
+[17 Fakes en vez de mocks](#17-fakes-en-vez-de-mocks) ·
+[18 Dynamic color apagado](#18-dynamic-color-apagado-por-defecto) ·
+[19 Snapshot testing](#19-snapshot-testing-con-roborazzi)
 
 ---
 
 ## 1. Modularizar desde el día 1
 
-**Qué:** el proyecto tiene 9 módulos de Gradle en vez de un solo `app`.
+**Qué:** el proyecto tiene 10 módulos de Gradle en vez de un solo `app`.
 
 **Por qué:**
 - Es mucho más barato separar al principio que desarmar un monolito después.
 - Gradle **impide** violar la arquitectura: si `:features:todos` no declara `:core:data` como dependencia, no puede importar nada de ahí. En un solo módulo, la regla es una promesa; en varios, el compilador la hace cumplir.
 - Los módulos independientes compilan en paralelo y se recompilan solo cuando cambian.
 
-**Cuesta:** más archivos de configuración (hoy los `build.gradle.kts` de los módulos Android son casi idénticos) y más cosas para navegar.
+**Cuesta:** más archivos de configuración (los `build.gradle.kts` de los módulos Android son casi idénticos, y con Hilt la repetición creció: varios módulos declaran los mismos dos plugins y las mismas dos dependencias) y más cosas para navegar.
 
 **Revisar:** si el proyecto fuera de una sola pantalla y una sola persona, un módulo alcanzaría. Los *convention plugins* reducen la repetición de configuración.
 
@@ -38,6 +43,7 @@ La arquitectura no es gratis: todo lo de acá tiene un costo, y es parte de la l
 | `:core:data` | `:core:domain`, `:core:network`, `:core:database` |
 | `:core:database` | `:core:domain` |
 | `:core:network`, `:core:domain` | nada |
+| `:core:testing` | `:core:domain` (y entra en los demás solo como `testImplementation`) |
 
 **Por qué:** lo que más cambia (UI, librerías de red, base de datos) queda afuera; lo que menos cambia (las reglas del negocio) queda en el centro y no se entera de nada de lo de afuera.
 
@@ -97,15 +103,33 @@ Hoy ninguna se cumple, por eso no están separados. Cuando aparezca el segundo p
 
 **Por qué:** una excepción es invisible en la firma de la función: nada obliga a manejarla. Con un tipo, el `when` del ViewModel es exhaustivo y el compilador exige tratar el error. Además la UI nunca ve un `IOException` ni un código HTTP: ve `DomainError.Network`, y decide qué texto mostrar.
 
-## 9. AppContainer: inyección de dependencias manual
+## 9. Hilt, y dónde vive cada módulo
 
-**Qué:** `AppContainer` crea todos los objetos y se los pasa a quien los necesita por constructor.
+**Qué:** la inyección de dependencias la resuelve Hilt. Cada capa expone su propio módulo
+(`NetworkModule`, `DatabaseModule`, `DataModule`) y `:app` solo aporta el flag `@IsDebug`.
+En la clase 1 esto era `AppContainer`, un archivo que creaba todo a mano.
 
-**Por qué:** alguien tiene que decidir qué implementación concreta usa cada contrato; ese lugar único es el *composition root*. Para pasar de datos falsos a una API real se cambia una línea ahí y nada más. Y como todo recibe sus dependencias por constructor, en un test se le pasa un fake.
+**Por qué Hilt:** el problema nunca fue crear objetos, fue **mantener a mano el grafo de quién necesita
+a quién**. `AppContainer` crecía con cada feature, había que acordarse de reutilizar instancias para
+compartir estado, y el `container` viajaba como parámetro por pantallas que no lo usaban. Hilt genera
+ese mismo código y, sobre todo, hace explícito el **scope** (`@Singleton`), que antes era un `by lazy`
+y una convención.
 
-**Por qué a mano:** para que se vea que **no hay magia**: es crear objetos y pasarlos. Hilt y Koin hacen lo mismo, generando ese código.
+**Por qué los módulos están repartidos y no todos en `:app`:** porque cada capa declara cómo se
+construye lo que ella implementa; es lo que recomienda la guía oficial y lo que hace *Now in Android*.
+Juntarlos todos en `:app` sería `AppContainer` otra vez, con anotaciones.
 
-**Revisar:** cuando el container crece demasiado o hace falta controlar el *scope* de los objetos → la **clase 2** lo reemplaza por Hilt o Koin.
+**Por qué el dominio no conoce Hilt:** `:core:domain` usa solo `javax.inject` (`@Inject`, `@Qualifier`),
+que son anotaciones estándar de Java. El dominio declara qué necesita sin saber quién se lo va a dar:
+migrar a Koin o a Dagger puro no lo tocaría.
+
+**Cuesta:**
+- `:core:data`, `:core:network` y `:core:database` dejaron de ser módulos Kotlin puro y pasaron a
+  `android.library`, porque Hilt es Android-only. Compilan un poco más lento. El dominio se mantuvo puro.
+- Aparece código generado: los errores de Dagger son largos y, al principio, difíciles de leer.
+- KSP agrega una tarea de build por módulo.
+
+**Revisar:** en una app de una sola pantalla, la DI manual sigue siendo más clara que Hilt.
 
 ## 10. Route y Screen
 
@@ -139,9 +163,104 @@ Hoy ninguna se cumple, por eso no están separados. Cuando aparezca el segundo p
 
 **Qué:** la API y la base de Tareas son falsas (`FakeTodoApi`, `InMemoryTodoDao`) detrás de las mismas interfaces que tendrían las reales (`TodoApi`, `TodoDao`).
 
-**Por qué:** esta primera clase es de UI y MVVM; conectar Room y un backend agrega ruido. Pero la arquitectura ya está preparada: reemplazarlos es cambiar `AppContainer`. Libros sí usa Retrofit real, para mostrar cómo se ve.
+**Por qué:** la primera clase era de UI y MVVM; conectar Room y un backend agregaba ruido. Pero la arquitectura ya está preparada: reemplazarlos es cambiar una línea de `NetworkModule` (la API) o un `@Binds` de `DatabaseModule` (la base). Libros sí usa Retrofit real, para mostrar cómo se ve.
 
-**Ojo:** los fakes están en el `main` de `:core:network`, no en un módulo de tests. Es una simplificación para la clase; en un proyecto real irían separados.
+**Ojo:** `FakeTodoApi` está en el `main` de `:core:network`, no en un módulo de tests, porque es la fuente de datos *de la app*, no de los tests. Los dobles de prueba sí viven aparte, en `:core:testing`.
+
+## 15. Assisted injection para los argumentos de navegación
+
+**Qué:** `TodoDetailViewModel` y `BookDetailViewModel` usan `@AssistedInject` + `@AssistedFactory`, y se
+crean con `hiltViewModel(creationCallback = { it.create(key.todoId) })`.
+
+**Por qué:** un ViewModel de detalle necesita dos cosas de orígenes distintos: sus casos de uso, que los
+sabe el grafo, y el id, que lo sabe la navegación recién cuando el usuario toca un ítem. Assisted
+injection combina las dos mitades y es la [receta oficial para Navigation 3](https://developer.android.com/guide/navigation/navigation-3/recipes/passingarguments).
+
+**Por qué se inyecta el `Int` y no la `NavKey`:** `TodoDetailDestination` vive en `:app`, y las features
+no conocen `:app`. Pasar la key rompería la regla de dependencias (decisión 2).
+
+**Cuesta:** una interfaz `Factory` por cada ViewModel con argumentos.
+
+**Alternativa descartada:** `SavedStateHandle`, que es lo habitual con Navigation 2, porque Navigation 3
+no escribe los argumentos ahí: las keys son objetos tipados, no un `Bundle`.
+
+## 16. Design system propio sobre Material 3
+
+**Qué:** `ComposeAcademyTheme` define el esquema de color completo (incluidos los `surfaceContainer*`),
+tipografía y shapes; y se extiende con tokens propios vía `AppSpacing` + `LocalAppSpacing`, accesibles
+desde el objeto `AppTheme`.
+
+**Por qué extender y no reemplazar:** Material trae colores, tipografías y formas, pero no espaciados.
+Sin un token, los `16.dp` se desparraman y nadie sabe por qué una pantalla respira distinto que otra.
+Un `CompositionLocal` es la forma estándar de sumar valores al árbol sin pasarlos por parámetro.
+
+**Por qué definir los roles de superficie:** si el esquema no los define, los componentes de M3 caen en
+el violeta por defecto de Material. Pasó en este proyecto: con la paleta propia ya aplicada, la barra de
+navegación seguía lila.
+
+**Cuesta:** un `Color.kt` largo (una rampa tonal por familia) que conviene generar con
+[Material Theme Builder](https://m3.material.io/theme-builder) en lugar de escribir a mano.
+
+## 17. Fakes en vez de mocks
+
+**Qué:** no hay MockK ni Mockito. Los dobles de prueba son clases escritas a mano en `:core:testing`.
+
+**Por qué:** un fake *se comporta* como el objeto real (si agregás una tarea, la lista la refleja);
+un mock solo devuelve lo que le dijeron. Los tests con fakes se leen como el escenario que describen y
+no se rompen cuando cambia el orden de las llamadas. Como los contratos son interfaces del dominio
+(decisión 5), escribir el fake es barato.
+
+**Cuesta:** mantener el fake cuando la interfaz cambia. Por eso hay **uno solo** por contrato,
+compartido, en vez de uno por módulo de test.
+
+**Revisar:** para interfaces de terceros, grandes y ajenas, un mock suele convenir.
+
+## 18. Dynamic color apagado por defecto
+
+**Qué:** `ComposeAcademyTheme(dynamicColor = false)` por defecto. En la clase 1 estaba en `true`.
+
+**Por qué:** en Android 12+ el dynamic color genera la paleta desde el fondo de pantalla del usuario y
+**tapa por completo** la paleta de marca. Para una app con identidad propia —y para una clase donde lo
+que queremos ver es justamente nuestra paleta— el default razonable es apagarlo.
+
+**Revisar:** es una decisión de producto, no técnica. El interruptor sigue estando, y el tab Playground
+permite prenderlo en vivo para discutirlo.
+
+## 19. Snapshot testing con Roborazzi
+
+**Qué:** los componentes compartidos de `:core:ui` tienen tests que los dibujan, guardan el
+resultado como PNG y lo comparan contra una imagen de referencia versionada en el repo
+(`core/ui/src/test/snapshots/images`).
+
+**Por qué:** hay una clase entera de errores que ningún assert detecta, porque no rompen nada:
+un color mal asignado, un padding que se desarma, un texto que se corta, un contraste ilegible
+en modo oscuro. La app compila, los tests pasan, y se ve mal. Pasó en este mismo proyecto:
+con la paleta propia ya aplicada, la barra de navegación seguía saliendo lila porque faltaban
+los roles `surfaceContainer*` (ver decisión 16). Un snapshot test lo habría atrapado solo.
+
+**Por qué acá y no en `:features:*`:** empezamos por los componentes compartidos porque son los
+que usan todas las pantallas y los que menos cambian. Extenderlo a las pantallas completas es
+barato (ya son `Screen` sin estado), pero multiplica las imágenes a mantener.
+
+**Por qué Roborazzi y no Paparazzi ni el plugin oficial:** era la única opción **estable** al
+momento de la clase. Paparazzi está en `2.0.0-alpha05.1` y el plugin oficial de Google
+(`com.android.compose.screenshot`) sigue en `0.0.1-alphaXX` y ya está deprecado a favor de los
+*test suites* de AGP, que requieren una versión alpha de AGP.
+
+**Cuesta, y bastante:**
+- **Arranque lento.** La primera corrida en cada máquina baja e instrumenta el runtime de
+  Robolectric (~200 MB). En este proyecto tardó varios minutos. Después queda cacheado en `~/.m2`.
+- **Dos parches de compatibilidad.** Robolectric necesita flags `--add-exports`/`--add-opens`
+  para acceder a internals de la JVM (cerrados desde el JDK 17), y hubo que fijar
+  `@Config(sdk = [34])` porque Espresso —que Roborazzi usa internamente— falla contra el
+  runtime de Android 17 con `NoSuchMethodException: InputManager.getInstance()`.
+- **Mantenimiento.** Todo cambio visual intencional obliga a regrabar las imágenes y commitearlas.
+- **Peso del repo.** Son binarios; crecen rápido si se agregan muchas pantallas y variantes.
+
+**Revisar:** si la suite se vuelve lenta o las imágenes empiezan a regrabarse "porque sí" sin que
+nadie mire el diff, el test dejó de aportar. También conviene revisar cuando Paparazzi o el
+plugin oficial lleguen a estable.
+
 
 ---
 
@@ -149,8 +268,7 @@ Hoy ninguna se cumple, por eso no están separados. Cuando aparezca el segundo p
 
 | Tema | Por qué no está todavía | Dónde encaja |
 |---|---|---|
-| Hilt / Koin | Primero entender la inyección a mano | Clase 2 |
-| Testing en profundidad | Hay algunos tests de ejemplo (dominio, mappers, ViewModels) | Clase 3 |
+| Tests de UI con Compose y E2E | Primero los unitarios y el test del grafo | Clase 3 |
 | Room real | Detrás de `TodoDao` ya está su lugar | A definir |
 | Convention plugins | Primero sentir la repetición de los `build.gradle.kts` | A definir |
 | Paging 3 | La paginación manual de Libros enseña la idea de fondo | A definir |

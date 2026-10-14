@@ -9,6 +9,7 @@ import ar.edu.unaj.am.myapplication.core.domain.repository.BookRepository
 import ar.edu.unaj.am.myapplication.core.network.BookApi
 import ar.edu.unaj.am.myapplication.core.network.safeApiCall
 import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
 
 /**
  * Datos desde la red (Gutendex) + un caché en memoria.
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
  * El ViewModel no sabe nada de esto: decidir de dónde salen los datos es trabajo del repositorio.
  * Para una estrategia offline-first con base local, compará con [TodoRepositoryImpl].
  */
-class BookRepositoryImpl(
+class BookRepositoryImpl @Inject constructor(
     private val api: BookApi
 ) : BookRepository {
 

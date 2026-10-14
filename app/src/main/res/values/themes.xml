@@ -1,4 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        Este tema XML es el de la VENTANA, no el de Compose: define el fondo que se ve
+        mientras la app arranca, antes de que exista el primer composable.
+        Los colores de las pantallas los pone ComposeAcademyTheme (:core:ui).
+        Las barras van transparentes porque la app dibuja edge-to-edge.
+    -->
     <style name="Base.Theme.MyApplication" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

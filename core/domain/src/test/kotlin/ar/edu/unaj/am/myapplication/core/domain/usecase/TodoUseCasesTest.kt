@@ -2,7 +2,8 @@ package ar.edu.unaj.am.myapplication.core.domain.usecase
 
 import ar.edu.unaj.am.myapplication.core.domain.model.AppResult
 import ar.edu.unaj.am.myapplication.core.domain.model.DomainError
-import ar.edu.unaj.am.myapplication.core.domain.model.Todo
+import ar.edu.unaj.am.myapplication.core.testing.FakeTodoRepository
+import ar.edu.unaj.am.myapplication.core.testing.todo
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -36,8 +37,8 @@ class TodoUseCasesTest {
     fun `observe returns pending todos first`() = runTest {
         val repository = FakeTodoRepository(
             listOf(
-                Todo(1, "Hecha", "", isCompleted = true),
-                Todo(2, "Pendiente", "", isCompleted = false)
+                todo(id = 1, title = "Hecha", isCompleted = true),
+                todo(id = 2, title = "Pendiente")
             )
         )
 
@@ -48,7 +49,7 @@ class TodoUseCasesTest {
 
     @Test
     fun `toggle flips completion`() = runTest {
-        val todo = Todo(1, "Tarea", "", isCompleted = false)
+        val todo = todo(id = 1)
         val repository = FakeTodoRepository(listOf(todo))
 
         ToggleTodoUseCase(repository)(todo)

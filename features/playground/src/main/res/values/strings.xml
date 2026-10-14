@@ -1,3 +1,11 @@
 <resources>
-    <string name="playground_title">Playground</string>
+    <string name="playground_title">Design system</string>
+    <string name="playground_dark_mode">Modo oscuro</string>
+    <string name="playground_dynamic_color">Dynamic color (Android 12+)</string>
+    <string name="playground_section_colors">Roles de color</string>
+    <string name="playground_section_typography">Escala tipográfica</string>
+    <string name="playground_section_shapes">Formas</string>
+    <string name="playground_section_spacing">Espaciados</string>
+    <string name="playground_colors_hint">Cada tarjeta usa un rol y su par "on-": por eso el texto siempre se lee, en claro y en oscuro.</string>
+    <string name="playground_spacing_hint">Tokens propios, fuera de Material: AppTheme.spacing.md en vez de 16.dp suelto.</string>
 </resources>

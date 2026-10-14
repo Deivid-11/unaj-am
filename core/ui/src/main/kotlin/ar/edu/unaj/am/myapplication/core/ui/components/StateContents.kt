@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.unaj.am.myapplication.core.ui.R
-import ar.edu.unaj.am.myapplication.core.ui.theme.MyApplicationTheme
+import ar.edu.unaj.am.myapplication.core.ui.theme.ComposeAcademyTheme
 
 // Componentes reutilizables para los estados típicos de una pantalla.
 // Antes estaban copiados en cada pantalla; ahora cualquier feature los usa.
@@ -132,13 +132,13 @@ fun MessageContent(
 @Preview(showBackground = true)
 @Composable
 private fun LoadingContentPreview() {
-    MyApplicationTheme { LoadingContent(message = "Cargando…") }
+    ComposeAcademyTheme { LoadingContent(message = "Cargando…") }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun ErrorContentPreview() {
-    MyApplicationTheme {
+    ComposeAcademyTheme {
         ErrorContent(
             title = "Ups, algo salió mal",
             message = "No se pudo conectar con el servidor",

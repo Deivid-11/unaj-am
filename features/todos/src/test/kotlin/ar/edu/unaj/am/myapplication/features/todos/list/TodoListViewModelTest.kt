@@ -2,42 +2,33 @@ package ar.edu.unaj.am.myapplication.features.todos.list
 
 import ar.edu.unaj.am.myapplication.core.domain.model.AppResult
 import ar.edu.unaj.am.myapplication.core.domain.model.DomainError
-import ar.edu.unaj.am.myapplication.core.domain.model.Todo
-import ar.edu.unaj.am.myapplication.core.domain.repository.TodoRepository
 import ar.edu.unaj.am.myapplication.core.domain.usecase.AddTodoUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.DeleteTodoUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.ObserveTodosUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.RefreshTodosUseCase
 import ar.edu.unaj.am.myapplication.core.domain.usecase.ToggleTodoUseCase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
+import ar.edu.unaj.am.myapplication.core.testing.FakeTodoRepository
+import ar.edu.unaj.am.myapplication.core.testing.MainDispatcherRule
+import ar.edu.unaj.am.myapplication.core.testing.todo
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
+/**
+ * Tests del ViewModel SIN Android: no hay emulador, ni red, ni base de datos.
+ * Es posible porque el ViewModel depende de interfaces del dominio, no de implementaciones.
+ *
+ * Fijate que los casos de uso se construyen a mano: la inyección de dependencias es para
+ * la app, no para los tests. Un unit test arma exactamente el escenario que quiere probar.
+ */
 class TodoListViewModelTest {
 
+    // Reemplaza Dispatchers.Main (que en la JVM no existe) por uno de test.
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     private val repository = FakeTodoRepository()
-
-    @Before
-    fun setUp() {
-        // viewModelScope usa Dispatchers.Main, que no existe en la JVM: lo reemplazamos.
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
 
     private fun createViewModel() = TodoListViewModel(
         observeTodos = ObserveTodosUseCase(repository),
@@ -49,7 +40,7 @@ class TodoListViewModelTest {
 
     @Test
     fun `initial load emits Success with todos`() = runTest {
-        repository.todos.value = listOf(Todo(1, "Tarea", "", isCompleted = false))
+        repository.todos.value = listOf(todo(id = 1, title = "Tarea"))
 
         val viewModel = createViewModel()
 
@@ -78,7 +69,7 @@ class TodoListViewModelTest {
 
     @Test
     fun `failed refresh keeps list and shows message`() = runTest {
-        repository.todos.value = listOf(Todo(1, "Tarea", "", isCompleted = false))
+        repository.todos.value = listOf(todo(id = 1, title = "Tarea"))
         val viewModel = createViewModel()
         repository.refreshResult = AppResult.Error(DomainError.Network)
 
@@ -87,35 +78,5 @@ class TodoListViewModelTest {
         val state = viewModel.uiState.value as TodoListUiState.Success
         assertEquals(1, state.todos.size)
         assertEquals(DomainError.Network, state.userMessage)
-    }
-}
-
-private class FakeTodoRepository : TodoRepository {
-
-    val todos = MutableStateFlow<List<Todo>>(emptyList())
-    var refreshResult: AppResult<Unit> = AppResult.Success(Unit)
-
-    override fun observeTodos(): Flow<List<Todo>> = todos
-
-    override suspend fun refreshTodos(): AppResult<Unit> = refreshResult
-
-    override suspend fun getTodo(id: Int): AppResult<Todo> =
-        todos.value.find { it.id == id }?.let { AppResult.Success(it) }
-            ?: AppResult.Error(DomainError.NotFound)
-
-    override suspend fun addTodo(title: String, description: String): AppResult<Todo> {
-        val todo = Todo(todos.value.size + 1, title, description, isCompleted = false)
-        todos.update { it + todo }
-        return AppResult.Success(todo)
-    }
-
-    override suspend fun updateTodo(todo: Todo): AppResult<Todo> {
-        todos.update { list -> list.map { if (it.id == todo.id) todo else it } }
-        return AppResult.Success(todo)
-    }
-
-    override suspend fun deleteTodo(id: Int): AppResult<Unit> {
-        todos.update { list -> list.filterNot { it.id == id } }
-        return AppResult.Success(Unit)
     }
 }

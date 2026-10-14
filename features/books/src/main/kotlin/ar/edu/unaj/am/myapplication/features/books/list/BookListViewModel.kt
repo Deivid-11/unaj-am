@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ar.edu.unaj.am.myapplication.core.domain.model.AppResult
 import ar.edu.unaj.am.myapplication.core.domain.usecase.GetBooksUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +16,8 @@ import kotlinx.coroutines.launch
  * Paginación manual: pedimos de a una página y la vamos sumando a la lista.
  * (En proyectos grandes esto lo resuelve Paging 3, pero la idea de fondo es esta).
  */
-class BookListViewModel(
+@HiltViewModel
+class BookListViewModel @Inject constructor(
     private val getBooks: GetBooksUseCase
 ) : ViewModel() {
 

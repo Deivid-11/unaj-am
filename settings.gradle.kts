@@ -37,4 +37,6 @@ include(":core:data")
 include(":core:network")
 include(":core:database")
 include(":core:ui")
+// Utilidades de test compartidas (fakes, reglas de JUnit, datos de prueba).
+include(":core:testing")
  

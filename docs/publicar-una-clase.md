@@ -20,15 +20,17 @@ git checkout main               # vuelve a la versión más nueva
 ## Qué es el Playground
 
 El tab **Playground** es una pantalla libre para escribir código en vivo con los alumnos, sin tocar Tareas ni Libros.
-Todo lo que se escribe va en `PlaygroundContent`, en
-`features/playground/src/main/kotlin/ar/edu/unaj/am/myapplication/features/playground/PlaygroundScreen.kt`.
+Vive en `features/playground/src/main/kotlin/ar/edu/unaj/am/myapplication/features/playground/PlaygroundScreen.kt`.
+
+Se recicla en cada clase: hoy contiene la **vitrina del design system** de la clase 2 (roles de color,
+escala tipográfica, formas y espaciados, con interruptores de modo oscuro y dynamic color).
 
 Ese código queda guardado en el archivo, así que **al terminar la clase hay que decidir qué hacer con él**:
 
 | Opción | Cuándo conviene |
 |---|---|
-| **Dejarlo** | Si el ejemplo de la clase sirve como material para que los alumnos lo repasen. |
-| **Dejar `PlaygroundContent` vacío** (un `Box` sin contenido) | Si querés que la clase siguiente arranque con la pantalla limpia. |
+| **Dejarlo** | Si el ejemplo de la clase sirve como material para que los alumnos lo repasen (es lo que hicimos con la vitrina del design system). |
+| **Vaciarlo** (un `Box` sin contenido) | Si querés que la clase siguiente arranque con la pantalla limpia. |
 
 No es obligatorio ninguna de las dos: es una decisión didáctica. Lo importante es **hacerla antes de crear el tag**,
 porque el tag congela lo que haya en ese momento.
@@ -39,6 +41,11 @@ porque el tag congela lo que haya en ese momento.
 2. Verificá que todo compile y los tests pasen:
    ```bash
    ./gradlew assembleDebug test
+   ```
+   Si la clase tocó la inyección de dependencias, corré también los tests instrumentados
+   (necesitan un emulador abierto), que son los que verifican el grafo de Hilt:
+   ```bash
+   ./gradlew :app:connectedDebugAndroidTest
    ```
 3. Hacé el commit:
    ```bash

@@ -14,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import ar.edu.unaj.am.myapplication.di.AppContainer
 import ar.edu.unaj.am.myapplication.navigation.AppNavDisplay
 import ar.edu.unaj.am.myapplication.navigation.NavigationState
 import ar.edu.unaj.am.myapplication.navigation.TopLevelDestination
@@ -23,7 +22,6 @@ import ar.edu.unaj.am.myapplication.navigation.rememberNavigationState
 /** Estructura general de la app: bottom bar + NavDisplay. Cada pantalla tiene su propio Scaffold adentro. */
 @Composable
 fun AppShell(
-    container: AppContainer,
     navigationState: NavigationState = rememberNavigationState()
 ) {
     Scaffold(
@@ -46,7 +44,6 @@ fun AppShell(
     ) { innerPadding ->
         AppNavDisplay(
             navigationState = navigationState,
-            container = container,
             // consumeWindowInsets: la bottom bar ya ocupa el espacio de la barra de navegación,
             // así las pantallas no vuelven a sumarlo.
             modifier = Modifier

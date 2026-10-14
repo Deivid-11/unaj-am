@@ -1,5 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.MyApplication" parent="android:Theme.Material.Light.NoActionBar">
+    <!--
+        Mismo tema en modo oscuro. El parent cambia a Theme.Material.NoActionBar
+        (la variante oscura): si heredara del .Light, al abrir la app en modo oscuro
+        se vería un destello blanco antes de que Compose dibuje.
+    -->
+    <style name="Base.Theme.MyApplication" parent="android:Theme.Material.NoActionBar">
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>

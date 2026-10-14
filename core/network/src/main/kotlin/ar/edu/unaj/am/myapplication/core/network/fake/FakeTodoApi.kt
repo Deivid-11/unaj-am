@@ -11,7 +11,7 @@ import java.io.IOException
 /**
  * "Servidor" en memoria que simula latencia y errores de red.
  * Como implementa [TodoApi], el resto de la app no sabe (ni le importa) que es falso:
- * cambiarlo por Retrofit es tocar UNA línea en AppContainer.
+ * cambiarlo por Retrofit es tocar UNA línea en NetworkModule.
  */
 class FakeTodoApi(
     private val latencyMs: Long = 500

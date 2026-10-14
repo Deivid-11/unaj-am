@@ -8,7 +8,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 
-/** Arma el cliente HTTP. Lo usa AppContainer; nadie más conoce Retrofit ni OkHttp. */
+/** Arma el cliente HTTP. Lo usa NetworkModule; nadie más conoce Retrofit ni OkHttp. */
 object NetworkFactory {
 
     private const val GUTENDEX_BASE_URL = "https://gutendex.com/"
@@ -18,7 +18,7 @@ object NetworkFactory {
 
     /**
      * @param logger dónde escribir los logs de red, o null para no loguear.
-     * Lo recibimos de afuera porque este módulo es Kotlin puro y no conoce android.util.Log.
+     * Lo recibimos de afuera para que este objeto siga siendo testeable sin Android.
      */
     fun createBookApi(logger: ((String) -> Unit)? = null): BookApi {
         val client = OkHttpClient.Builder()

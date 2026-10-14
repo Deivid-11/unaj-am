@@ -11,6 +11,7 @@ import ar.edu.unaj.am.myapplication.core.domain.model.Todo
 import ar.edu.unaj.am.myapplication.core.domain.repository.TodoRepository
 import ar.edu.unaj.am.myapplication.core.network.TodoApi
 import ar.edu.unaj.am.myapplication.core.network.safeApiCall
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.map
  * - La red solo se usa para traer datos nuevos o confirmar cambios; cuando responde bien,
  *   escribimos en la base y el Flow notifica a quien esté observando.
  */
-class TodoRepositoryImpl(
+class TodoRepositoryImpl @Inject constructor(
     private val api: TodoApi,
     private val dao: TodoDao
 ) : TodoRepository {

@@ -1,6 +1,7 @@
 package ar.edu.unaj.am.myapplication.core.database.dao
 
 import ar.edu.unaj.am.myapplication.core.database.model.TodoEntity
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.update
  * "Base de datos" en memoria. Igual que Room, expone un Flow que vuelve a emitir
  * cada vez que la tabla cambia: la UI se actualiza sola, sin volver a pedir los datos.
  */
-class InMemoryTodoDao : TodoDao {
+class InMemoryTodoDao @Inject constructor() : TodoDao {
 
     private val table = MutableStateFlow<Map<Int, TodoEntity>>(emptyMap())
 

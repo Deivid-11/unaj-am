@@ -2,7 +2,7 @@ package ar.edu.unaj.am.myapplication.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -10,7 +10,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import ar.edu.unaj.am.myapplication.di.AppContainer
 import ar.edu.unaj.am.myapplication.features.books.detail.BookDetailRoute
 import ar.edu.unaj.am.myapplication.features.books.detail.BookDetailViewModel
 import ar.edu.unaj.am.myapplication.features.books.list.BookListRoute
@@ -28,7 +27,6 @@ import ar.edu.unaj.am.myapplication.features.todos.list.TodoListViewModel
 @Composable
 fun AppNavDisplay(
     navigationState: NavigationState,
-    container: AppContainer,
     modifier: Modifier = Modifier
 ) {
     // entryProvider: "para esta key, mostrá esta pantalla". La key llega ya tipada:
@@ -36,17 +34,11 @@ fun AppNavDisplay(
     val entryProvider = entryProvider<NavKey> {
 
         entry<TodoListDestination> {
-            // viewModel { } crea el ViewModel UNA vez por entrada del back stack:
-            // sobrevive a rotaciones y recomposiciones, y se destruye cuando la pantalla sale del stack.
-            val viewModel = viewModel {
-                TodoListViewModel(
-                    observeTodos = container.observeTodos,
-                    refreshTodos = container.refreshTodos,
-                    addTodo = container.addTodo,
-                    toggleTodo = container.toggleTodo,
-                    deleteTodo = container.deleteTodo
-                )
-            }
+            // hiltViewModel() pide el ViewModel al grafo: Hilt resuelve TODA la cadena
+            // (casos de uso -> repositorio -> api + dao) sin que acá nombremos nada de eso.
+            // Igual que antes, se crea UNA vez por entrada del back stack: sobrevive a
+            // rotaciones y recomposiciones, y se destruye cuando la pantalla sale del stack.
+            val viewModel: TodoListViewModel = hiltViewModel()
             TodoListRoute(
                 viewModel = viewModel,
                 onTodoClick = { todoId -> navigationState.navigate(TodoDetailDestination(todoId)) }
@@ -54,18 +46,21 @@ fun AppNavDisplay(
         }
 
         entry<TodoDetailDestination> { key ->
-            val viewModel = viewModel {
-                TodoDetailViewModel(
-                    todoId = key.todoId,
-                    getTodo = container.getTodo,
-                    updateTodo = container.updateTodo
-                )
-            }
+            // El detalle necesita un dato que Hilt NO puede conocer: el id que eligió el
+            // usuario. Se lo pasamos con la @AssistedFactory del ViewModel; el resto de
+            // las dependencias las sigue poniendo el grafo.
+            //
+            // No hace falta un `key` string para distinguir instancias: el
+            // rememberViewModelStoreNavEntryDecorator de abajo le da a cada entrada del
+            // back stack su propio ViewModelStore (usa NavEntry.contentKey).
+            val viewModel = hiltViewModel<TodoDetailViewModel, TodoDetailViewModel.Factory>(
+                creationCallback = { factory -> factory.create(key.todoId) }
+            )
             TodoDetailRoute(viewModel = viewModel, onBack = { navigationState.goBackFrom(key) })
         }
 
         entry<BookListDestination> {
-            val viewModel = viewModel { BookListViewModel(getBooks = container.getBooks) }
+            val viewModel: BookListViewModel = hiltViewModel()
             BookListRoute(
                 viewModel = viewModel,
                 onBookClick = { bookId -> navigationState.navigate(BookDetailDestination(bookId)) }
@@ -73,9 +68,9 @@ fun AppNavDisplay(
         }
 
         entry<BookDetailDestination> { key ->
-            val viewModel = viewModel {
-                BookDetailViewModel(bookId = key.bookId, getBook = container.getBook)
-            }
+            val viewModel = hiltViewModel<BookDetailViewModel, BookDetailViewModel.Factory>(
+                creationCallback = { factory -> factory.create(key.bookId) }
+            )
             BookDetailRoute(viewModel = viewModel, onBack = { navigationState.goBackFrom(key) })
         }
 

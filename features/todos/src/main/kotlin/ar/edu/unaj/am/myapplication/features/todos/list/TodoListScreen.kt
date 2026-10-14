@@ -70,7 +70,7 @@ import ar.edu.unaj.am.myapplication.core.ui.components.ErrorContent
 import ar.edu.unaj.am.myapplication.core.ui.components.LoadingContent
 import ar.edu.unaj.am.myapplication.core.ui.components.MessageContent
 import ar.edu.unaj.am.myapplication.core.ui.components.asMessage
-import ar.edu.unaj.am.myapplication.core.ui.theme.MyApplicationTheme
+import ar.edu.unaj.am.myapplication.core.ui.theme.ComposeAcademyTheme
 import ar.edu.unaj.am.myapplication.features.todos.R
 import kotlinx.coroutines.launch
 
@@ -455,7 +455,7 @@ private val previewTodos = listOf(
 
 @Composable
 private fun TodoListPreview(uiState: TodoListUiState) {
-    MyApplicationTheme(dynamicColor = false) {
+    ComposeAcademyTheme {
         TodoListScreen(
             uiState = uiState,
             onTodoClick = {},

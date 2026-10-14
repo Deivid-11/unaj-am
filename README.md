@@ -31,25 +31,35 @@ Tres tabs en una bottom bar:
 
 **Por consola**
 ```bash
-./gradlew assembleDebug   # compila la app
-./gradlew test            # corre todos los tests unitarios
-./gradlew lintDebug       # análisis estático
+./gradlew assembleDebug                    # compila la app
+./gradlew test                             # tests unitarios (JVM, sin emulador)
+./gradlew lintDebug                        # análisis estático
+./gradlew :app:connectedDebugAndroidTest   # tests de Hilt (necesita emulador o dispositivo)
+
+# Snapshot tests: comparan cómo se VEN los componentes contra imágenes de referencia
+./gradlew :core:ui:verifyRoborazziDebug    # falla si algo cambió visualmente
+./gradlew :core:ui:recordRoborazziDebug    # regraba las referencias (cambio intencional)
+./gradlew :core:ui:compareRoborazziDebug   # genera imágenes con las diferencias marcadas
 ```
+
+> La **primera** corrida de los snapshot tests baja e instrumenta el runtime de Robolectric
+> (~200 MB) y tarda varios minutos. Después queda cacheado en `~/.m2` y son rápidos.
 
 Para ver los requests de red en Logcat, filtrá por `tag:API_BOOKS` (solo en builds debug).
 
 ## Mapa del proyecto
 
 ```
-:app                      Composition root: arma las dependencias (AppContainer) y la navegación
+:app                      Composition root: arranca el grafo de Hilt y arma la navegación
 :features:todos           Feature Tareas  → list/ y detail/
 :features:books           Feature Libros  → list/ y detail/
 :features:playground      Pantalla de práctica
-:core:ui                  Tema y componentes de UI compartidos
+:core:ui                  Tema, design system y componentes de UI compartidos (+ sus snapshot tests)
 :core:domain              Modelos, contratos de repositorio y casos de uso (Kotlin puro)
 :core:data                Implementación de los repositorios + mappers
 :core:network             API remota (Retrofit real + fake)
 :core:database            Base local (simulada en memoria)
+:core:testing             Fakes, reglas de JUnit y datos de prueba compartidos por los tests
 ```
 
 Paquete base: `ar.edu.unaj.am.myapplication` (cada módulo agrega su sufijo: `.core.domain`, `.features.todos`…).
@@ -73,14 +83,15 @@ Seguí un caso de uso de punta a punta, de la pantalla hacia los datos. Por ejem
 - [ARCHITECTURE.md](ARCHITECTURE.md) — **qué** hay en cada capa y qué puede depender de qué.
 - [docs/decisiones.md](docs/decisiones.md) — **por qué** se tomó cada decisión, qué cuesta y cuándo conviene revisarla.
 - [docs/publicar-una-clase.md](docs/publicar-una-clase.md) — *para el docente*: qué es un tag, qué hacer con el Playground y cómo publicar cada clase.
+- [docs/clase-02-di-theme-testing.md](docs/clase-02-di-theme-testing.md) — *para el docente*: guía de la clase 2 (Hilt, theming y testing) paso a paso.
 
 ## Hoja de ruta
 
 | Clase | Tema | Tag |
 |---|---|---|
 | 1 | UI en Compose + MVVM + estado en composables + panorama de arquitectura | `clase-01-ui-mvvm` |
-| 2 | Inyección de dependencias (reemplazar `AppContainer` por Hilt o Koin) | `clase-02-di` |
-| 3 | Testing | `clase-03-testing` |
+| 2 | Inyección de dependencias con Hilt + theming con Material 3 + testing (unitario, de grafo y de snapshot) | `clase-02-di-theme-testing` |
+| 3 | Tests de UI con Compose y E2E | `clase-03-ui-testing` |
 | … | A definir | |
 
 Cada clase se publica con un **tag de git**: una etiqueta con nombre pegada al código tal como quedó al terminar esa clase.
@@ -89,6 +100,5 @@ Así, si te perdiste una clase (o querés ver el punto de partida de la siguient
 git checkout clase-01-ui-mvvm
 ```
 
-Ideas para próximas clases, ya preparadas en el código: reemplazar los fakes por Retrofit y Room reales,
-un módulo `:core:testing` para compartir fakes entre tests, *convention plugins* para no repetir los `build.gradle.kts`,
-Paging 3 y búsqueda.
+Ideas para próximas clases, ya preparadas en el código: reemplazar los fakes por Retrofit y Room reales
+(ahora es cambiar un `@Binds`), *convention plugins* para no repetir los `build.gradle.kts`, Paging 3 y búsqueda.
